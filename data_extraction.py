@@ -23,18 +23,19 @@ def login(email,password):
     loginbutton.click()
     data = []
     #Go to SWE500 Quiz page
-    browser.get('https://ems.itu.edu/student/sections/5661/quizzes')
+    browser.get('https://ems.itu.edu/student/sections/5661/coursework')
     tables = browser.find_elements_by_xpath("//table[@class='table table-bordered table-hover']")
     table = tables[0]
     for tr in table.find_elements_by_tag_name('tr'):
         tds = tr.find_elements_by_tag_name('td')
-        tds = tds[0:3]
+        tds = tds[0:5]
         if tds:
             data.append([td.text for td in tds])
-    df = DataFrame.from_records(data, columns = ['Title','Points','Due'])  
+    df = DataFrame.from_records(data, columns = ['Type','Title','Points','Available','Due'])
+    cleandf = df.loc[df['Type'] != 'Lessons']
     browser.close()
     browser.quit()
-    return df
+    return cleandf
 
 def write_to_file(data_frame, path=None):
     if path is None:

@@ -8,6 +8,7 @@ from oauth2client import tools
 from oauth2client.file import Storage
 
 import datetime
+from data_parser import DataParser
 
 try:
     import argparse
@@ -19,7 +20,7 @@ except ImportError:
 # If modifying these scopes, delete your previously saved credentials
 # at ~/.credentials/calendar-python-quickstart.json
 SCOPES = 'https://www.googleapis.com/auth/calendar'
-CLIENT_SECRET_FILE = 'client_secret.json'
+CLIENT_SECRET_FILE = 'D:\python\menglong_id\client_id.json'
 APPLICATION_NAME = 'Google Calendar API Python Quickstart'
 
 
@@ -34,6 +35,7 @@ def get_credentials():
     """
     home_dir = os.path.expanduser('~')
     credential_dir = os.path.join(home_dir, '.credentials')
+    print(credential_dir)
     # credential_dir = os.path.basename(__file__+'/.credentials')
     if not os.path.exists(credential_dir):
         os.makedirs(credential_dir)
@@ -52,6 +54,27 @@ def get_credentials():
         print('Storing credentials to ' + credential_path)
     return credentials
 
+def gen_event(dict):
+    my_data = DataParser()
+    print(dict)
+    start_time = my_data.time_to_event_time(dict['Due'], 0) #TODO: change to available time
+    end_time = my_data.time_to_event_time(dict['Due'], 1)
+
+    event = {
+        'summary': dict['Title'],
+        'location': '2711 N 1st St, San Jose, CA 95134',
+        'description': 'Points: '. format(dict['Points']),
+        'start': {
+            'dateTime': start_time,
+            'timeZone': 'America/Los_Angeles',
+        },
+        'end': {
+            'dateTime': end_time,
+            'timeZone': 'America/Los_Angeles',
+        }
+    }
+    return event
+
 
 def main():
     """Shows basic usage of the Google Calendar API.
@@ -62,6 +85,8 @@ def main():
     credentials = get_credentials()
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('calendar', 'v3', http=http)
+
+
     event = {
         'summary': 'Google I/O 2015',
         'location': '800 Howard St., San Francisco, CA 94103',
@@ -75,11 +100,16 @@ def main():
             'timeZone': 'America/Los_Angeles',
         }
     }
-
     create_event(service, event)
-
     get_last_events(service, 10)
 
+def add_deadline(data=os.path.dirname(__file__)+"/data.json"):
+    my_data = DataParser()
+    deadline_dict = my_data.json_to_dict(data)
+
+    for index, deadline in deadline_dict.items():
+        event =gen_event(deadline)
+        create_event(service, event)
 
 def create_event(service, event):
     event = service.events().insert(calendarId='primary', body=event).execute()
@@ -103,4 +133,5 @@ def get_last_events(service, max):
 
 
 if __name__ == '__main__':
-    get_credentials()
+    # get_credentials()
+    main()

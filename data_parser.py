@@ -6,9 +6,8 @@ import time
 
 pp = pprint.PrettyPrinter(indent=4)
 
-class DataParser(object):
+class DataParser(object): #  TODO: support time zone converter
     def __init__(self):
-
         return
 
     def json_to_dict(self, file):
@@ -17,60 +16,90 @@ class DataParser(object):
                 dict = json.load(f)
                 return dict
 
-    def time_to_event_time(self, ems_time):
+    def gen_event(self, dict=None):
+        available_tuple = self.convert_tuple(dict['Available'])
+        due_tuple = self.convert_tuple(dict['Due'])
+        # print(dict['Available'], available_tuple)
+        # print(dict['Due'], due_tuple)
+
+        available_time = time.mktime(available_tuple)
+        due_time = time.mktime(due_tuple)
+
+        delta_time = due_time - available_time
+        if delta_time > 86400:
+            available_start = available_time
+            available_end = available_time + 3600
+            due_start = due_time - 3600
+            due_end = due_time
+            event_available = {
+                'summary': 'Available: ' + dict['Title'],
+                'location': '2711 N 1st St, San Jose, CA 95134',
+                'description': dict['Available'],
+                'start': {
+                    'dateTime': self.sec_to_google_time(available_start),
+                    'timeZone': 'America/Los_Angeles',
+                },
+                'end': {
+                    'dateTime': self.sec_to_google_time(available_end),
+                    'timeZone': 'America/Los_Angeles',
+                }
+            }
+            event_due = {
+                'summary': 'Due: ' + dict['Title'],
+                'location': '2711 N 1st St, San Jose, CA 95134',
+                'description': dict['Due'],
+                'start': {
+                    'dateTime': self.sec_to_google_time(due_start),
+                    'timeZone': 'America/Los_Angeles',
+                },
+                'end': {
+                    'dateTime': self.sec_to_google_time(due_end),
+                    'timeZone': 'America/Los_Angeles',
+                }
+            }
+            return [event_available, event_due]
+        else:
+            start = available_time
+            end = due_time
+            event = {
+                'summary': dict['Title'],
+                'location': '2711 N 1st St, San Jose, CA 95134',
+                'description': dict['Available'] + ' to ' + dict['Due'],
+                'start': {
+                    'dateTime': self.sec_to_google_time(start),
+                    'timeZone': 'America/Los_Angeles',
+                },
+                'end': {
+                    'dateTime': self.sec_to_google_time(end),
+                    'timeZone': 'America/Los_Angeles',
+                }
+            }
+            return [event]
+
+    def convert_tuple(self, time_in):
         """2018-04-1T09:00:00-07:00"""
-        month_map = {
-            'Jan': 1,
-            'Feb': 2,
-            'Mar': 3,
-            'Apr': 4,
-            'May': 5,
-            'Jun': 6,
-            'Jul': 7,
-            'Aug': 8,
-            'Sep': 9,
-            'Oct': 10,
-            'Nov': 11,
-            'Dec': 12
-        }
-        # # year = time[1].strip()
-        # match_year = re.search('(20[0-9][0-9])', ems_time)
-        # if match_year:
-        #     year = match_year.group(1)
-        # match = re.search('(...) (\d+) (\d+):(\d+) (AM|PM)', ems_time)
-        # # match = re.search('(...) (\d+) (\d+):(\d+) (AM|PM)(, (\d+))?') # with year
-        # if match:
-        #     month = match.group(1)
-        #     date = match.group(2)
-        #     hour = match.group(3)
-        #     min = match.group(4)
-        #     am_pm = match.group(5)
-        time_tuple = time.strptime(ems_time, '%b %d %I:%M %p') # Feb 3 4:00 PM
-        print time_tuple
-        print time_tuple.tm_mon
-        print time_tuple.tm_mday
-        print time_tuple.tm_hour
-        print time_tuple.tm_min
-        print time.strftime('%b %d %I:%M %p', time_tuple)
-        #
-        # if end != 0:
-        #     calendar_time = "{}-{}-{}T10:00:00-07:00".format(year, month_map[month], date)
-        # else:
-        #     calendar_time = "{}-{}-{}T09:00:00-07:00".format(year, month_map[month], date)
-        # print calendar_time
-        # return calendar_time
+        match = re.search(',\s?([1-9][0-9][0-9][0-9])', time_in)
+        if not match:
+            time_in = "{}, {}".format(time_in, time.strftime('%Y', time.localtime())) # Feb 3 4:00 PM
+        time_tuple = time.strptime(time_in, '%b %d %I:%M %p, %Y')
+        return time_tuple
 
-    def _get_month(self, ):
-        return
-
-
+    def sec_to_google_time(self, sec):
+        tuple = time.localtime(sec)
+        # print(tuple)
+        calendar_time = time.strftime("%Y-%m-%dT%H:%M:%S-07:00", tuple)
+        return calendar_time
 
 
 if __name__ == "__main__":
-    test = DataParser()
     path = os.path.dirname(__file__)+"/data.json"
-    dict = test.json_to_dict(path)
-    # pp.pprint(dict)
-    for key, dict_time in dict.items():
-        test.time_to_event_time(dict_time['Due'])
-
+    test = DataParser()
+    data = test.json_to_dict(path)
+    pp.pprint(data)
+    # print test.convert_tuple('Feb 3 4:00 PM')
+    # print test.convert_tuple('Feb 3 12:00 AM')
+    # print test.convert_tuple('Feb 3 01:00 AM')
+    # print test.convert_tuple('Feb 3 4:00 PM, 2000')
+    # for key, item in data.items():
+    #     events = test.gen_event(item)
+    #     pp.pprint(events)

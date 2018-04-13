@@ -20,7 +20,7 @@ except ImportError:
 # If modifying these scopes, delete your previously saved credentials
 # at ~/.credentials/calendar-python-quickstart.json
 SCOPES = 'https://www.googleapis.com/auth/calendar'
-CLIENT_SECRET_FILE = 'D:\python\menglong_id\client_id.json'
+CLIENT_SECRET_FILE = os.path.dirname(__file__) + '/client_id.json'
 APPLICATION_NAME = 'itu-deadlines'
 
 
@@ -96,13 +96,31 @@ def add_deadline(data=os.path.dirname(__file__)+"/data.json"):
     for index, deadline in deadline_dict.items():
         events =my_data.gen_event(deadline)
         for event in events:
-            # pp.pprint(event)
-            create_event(service, event)
+            if not is_duplicate_event(service,event):
+                create_event(service, event)
+
 
 def create_event(service, event):
     event = service.events().insert(calendarId='primary', body=event).execute()
     print('Event created')
 
+def is_duplicate_event(service, event):
+
+    ts = event['start']['dateTime']
+    tz = event['start']['timeZone']
+    eventsResult = service.events().list(
+        calendarId='primary', timeMin=ts, timeZone=tz, maxResults=10, singleEvents=True,
+        orderBy='startTime').execute()
+    events = eventsResult.get('items', [])
+
+    if not events:
+        return False
+    for result in events:
+        if(result['summary'] == event['summary']):
+            print("Duplicate event")
+            pp.pprint(event)
+            return True
+    return False
 
 def get_last_events(service, max):
     print('getting last %d event' % max)

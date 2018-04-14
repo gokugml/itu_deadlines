@@ -17,6 +17,10 @@ try:
 except ImportError:
     flags = None
 
+
+import pprint
+pp = pprint.PrettyPrinter(indent=4)
+
 # If modifying these scopes, delete your previously saved credentials
 # at ~/.credentials/calendar-python-quickstart.json
 SCOPES = 'https://www.googleapis.com/auth/calendar'
@@ -139,7 +143,5 @@ def get_last_events(service, max):
 
 
 if __name__ == '__main__':
-    import pprint
-    pp = pprint.PrettyPrinter(indent=4)
     # main()
     add_deadline()

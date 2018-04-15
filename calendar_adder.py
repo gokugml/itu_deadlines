@@ -121,8 +121,7 @@ def is_duplicate_event(service, event):
         return False
     for result in events:
         if(result['summary'] == event['summary']):
-            print("Duplicate event")
-            pp.pprint(event)
+            print("Duplicate event\t %s" % event['summary'])
             return True
     return False
 

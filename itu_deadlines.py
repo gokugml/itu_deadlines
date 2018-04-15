@@ -11,7 +11,8 @@ ems_ps_file = credential_dir + "/ems_ps.json"
 if not os.path.isfile(ems_ps_file):
     user_name = raw_input("Enter your ems user name:\n")
     password = getpass.getpass("Enter your login password:\n")
-    data_extraction.login(user_name, password)
+    data = data_extraction.login(user_name, password)
+    data_extraction.write_to_file(data)
     ps = {
         'user': user_name,
         'ps': password
@@ -23,7 +24,8 @@ else:
     if use_local.lower() == 'n':
         user_name = raw_input("Enter your ems user name:\n")
         password = getpass.getpass("Enter your login password:\n")
-        data_extraction.login(user_name, password)
+        data = data_extraction.login(user_name, password)
+        data_extraction.write_to_file(data)
         ps = {
             'user': user_name,
             'ps': password
@@ -35,6 +37,7 @@ else:
             ps = json.load(f)
             user_name = ps['user']
             password = ps['ps']
-        data_extraction.login(user_name, password)
+        data = data_extraction.login(user_name, password)
+        data_extraction.write_to_file(data)
 
 calendar_adder.add_deadline()

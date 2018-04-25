@@ -7,6 +7,8 @@ import json
 home_dir = os.path.expanduser('~')
 credential_dir = os.path.join(home_dir, '.credentials')
 ems_ps_file = credential_dir + "/ems_ps.json"
+if not os.path.exists(credential_dir):
+    os.makedirs(credential_dir)
 
 if not os.path.isfile(ems_ps_file):
     user_name = raw_input("Enter your ems user name:\n")
